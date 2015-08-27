@@ -3,7 +3,8 @@
 #include <Windows.h>
 #include <d2d1.h>
 #include <wincodec.h>
-#include <map>
+#include <dwrite.h>
+#include <list>
 
 class Application
 {
@@ -55,10 +56,17 @@ private:
     IWICBitmapSource *_bwBitmap = NULL;
     IWICBitmap *_editBitmap = NULL;
 
+    // DirectWrite
+    IDWriteFactory *_dwFactory = NULL;
+    IDWriteTextFormat *_textFormat = NULL;
+
+
     // Image zone map
     int **_zoneMap = nullptr;
     int *_zoneMapData = nullptr;
     UINT _colorCount = 0;
     int *_colorOrder = nullptr;
     UINT _currentColorIndex = 0;
+    std::list<std::pair<UINT, UINT>> _zoneCenters;
+    
 };

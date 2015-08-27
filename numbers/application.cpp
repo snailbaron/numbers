@@ -3,6 +3,15 @@
 #include <queue>
 #include <windowsx.h>
 #include <ctime>
+#include <sstream>
+
+struct ZoneInfo
+{
+    ZoneInfo() : hsum(0), wsum(0), count(0) { }
+    UINT hsum;
+    UINT wsum;
+    UINT count;
+};
 
 Application::Application(HINSTANCE hInstance) :
     _hInstance(hInstance)
@@ -105,6 +114,27 @@ HRESULT Application::CreateDeviceIndependentResources()
         CLSCTX_INPROC_SERVER,
         IID_PPV_ARGS(&_wicFactory)
         );
+    if (FAILED(hr)) return hr;
+
+    // Create DirectWrite factory
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)&_dwFactory);
+    if (FAILED(hr)) return hr;
+
+    hr = _dwFactory->CreateTextFormat(
+        L"Calibri",
+        NULL,
+        DWRITE_FONT_WEIGHT_BOLD,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        20.0f,
+        L"en-us",
+        &_textFormat
+    );
+    if (FAILED(hr)) return hr;
+
+    hr = _textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+    if (FAILED(hr)) return hr;
+    hr = _textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
     if (FAILED(hr)) return hr;
 
     return hr;
@@ -226,12 +256,30 @@ HRESULT Application::OnRender()
     HRESULT hr = CreateDeviceResources();
     if (SUCCEEDED(hr))
     {
+        D2D1_SIZE_F bsize = _d2dBitmap->GetSize();
+
         D2D1_SIZE_F size = _renderTarget->GetSize();
         D2D1_RECT_F rect = { 0, 0, size.width, size.height };
 
         _renderTarget->BeginDraw();
         _renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
         _renderTarget->DrawBitmap(_d2dBitmap, rect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+        UINT i = 0;
+        std::for_each(_zoneCenters.begin(), _zoneCenters.end(), [&](const std::pair<UINT, UINT> &p) {
+            i++;
+            std::wostringstream os;
+
+            UINT j;
+            for (j = 0; j < _colorCount-1 && _colorOrder[j] != i; j++);
+            os << j+1;
+
+
+            D2D1_RECT_F rect = { p.second * size.width / bsize.width, p.first * size.height / bsize.height, 0, 0 };
+            rect.right = rect.left;
+            rect.bottom = rect.top;
+            _renderTarget->DrawTextW(os.str().c_str(), os.str().length(), _textFormat, rect, _grayBrush);
+        });
         hr = _renderTarget->EndDraw();
 
         if (hr == D2DERR_RECREATE_TARGET)
@@ -269,6 +317,7 @@ BOOL Application::CalculateZoneMap()
     for (UINT i = 0; i < frameHeight; i++)
         _zoneMap[i] = &_zoneMapData[i * frameWidth];
 
+    std::list<ZoneInfo> zoneInfos;
     int colorCount = 0;
     for (UINT i = 0; i < frameHeight; i++)
     {
@@ -285,6 +334,8 @@ BOOL Application::CalculateZoneMap()
                 continue;
 
             colorCount++;
+            zoneInfos.push_back(ZoneInfo());
+
             std::queue<std::pair<UINT, UINT>> q;
             q.push(std::make_pair(i, j));
             while (!q.empty())
@@ -305,6 +356,10 @@ BOOL Application::CalculateZoneMap()
                 if (k >= 0 && k < frameHeight && l >= 0 && l < frameWidth && !_zoneMap[k][l])
                 {
                     _zoneMap[k][l] = colorCount;
+                    zoneInfos.back().hsum += k;
+                    zoneInfos.back().wsum += l;
+                    zoneInfos.back().count++;
+
                     q.push(std::make_pair(k - 1, l));
                     q.push(std::make_pair(k + 1, l));
                     q.push(std::make_pair(k, l - 1));
@@ -314,6 +369,11 @@ BOOL Application::CalculateZoneMap()
         }
     }
     _colorCount = colorCount;
+
+    _zoneCenters.clear();
+    std::for_each(zoneInfos.begin(), zoneInfos.end(), [&](const ZoneInfo &zi) {
+        _zoneCenters.push_back(std::make_pair(zi.hsum / zi.count, zi.wsum / zi.count));
+    });
 
     if (_colorOrder) delete[] _colorOrder;
     _colorOrder = new int[_colorCount];
