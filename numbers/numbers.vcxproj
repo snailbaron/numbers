@@ -147,10 +147,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="application.cpp" />
+    <ClCompile Include="bitmap_loader.cpp" />
+    <ClCompile Include="gfx_window.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utils.cpp" />
+    <ClCompile Include="zone_info.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.hpp" />
+    <ClInclude Include="bitmap_loader.hpp" />
+    <ClInclude Include="core.hpp" />
+    <ClInclude Include="gfx_window.hpp" />
+    <ClInclude Include="utils.hpp" />
+    <ClInclude Include="zone_info.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
