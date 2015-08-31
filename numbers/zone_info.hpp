@@ -17,6 +17,7 @@ public:
     const UINT GetColorCount() const { return _zoneCenters.size(); }
     const std::tuple<UINT, UINT> & GetZoneCenter(const UINT &zoneNumber) const;
     const UINT GetZoneNumber(UINT x, UINT y) const { return _zoneMap[y][x]; }
+    const UINT GetColor(UINT i) const { return _colorOrder[i-1]; }
 
     HRESULT Build(IWICBitmapSource *source);
 

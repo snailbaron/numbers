@@ -1,6 +1,9 @@
 #include <Windows.h>
 #include <sstream>
+#include <fstream>
 #include "core.hpp"
+#include "matrix.hpp"
+#include "gfx_window.hpp"
 
 void ReportFail(HRESULT hr)
 {
@@ -37,6 +40,8 @@ void GlobalFinalize()
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
 {
+    try {
+
     HRESULT hr = GlobalInit();
     if (SUCCEEDED(hr))
     {
@@ -45,12 +50,21 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
         if (SUCCEEDED(hr))
         {
             core.PlayLevel(L"lev1.bmp");
+            core.PlayLevel(L"lev2.bmp");
+            core.PlayLevel(L"lev3.bmp");
+            core.PlayLevel(L"lev4.bmp");
         }
         GlobalFinalize();
     }
     else
     {
         ReportFail(hr);
+    }
+
+    }
+    catch (std::exception &ex)
+    {
+        MessageBoxA(NULL, ex.what(), "Error", MB_OK | MB_ICONERROR);
     }
 
     return 0;

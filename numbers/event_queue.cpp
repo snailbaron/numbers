@@ -6,19 +6,19 @@ EventQueue::EventQueue()
 EventQueue::~EventQueue()
 { }
 
-void EventQueue::Push(Event::Base evt)
+void EventQueue::Push(Event::Base *evt)
 {
     _queue.push(evt);
 }
 
-bool EventQueue::Pull(Event::Base *evt)
+Event::Base * EventQueue::Pull()
 {
     if (_queue.empty())
-        return false;
+        return nullptr;
 
-    (*evt) = _queue.front();
+    Event::Base *evt = _queue.front();
     _queue.pop();
-    return true;
+    return evt;
 }
 
 void EventQueue::Clear()

@@ -5,8 +5,8 @@
 #include <dwrite.h>
 #include <wincodec.h>
 #include "gfx_window.hpp"
-#include "event_queue.hpp"
 #include "zone_info.hpp"
+#include "event_queue.hpp"
 
 class Core
 {
@@ -21,11 +21,11 @@ public:
 
     HRESULT PlayLevel(LPCWSTR levelFile);
 
-    HRESULT OnRender(const Event::Render &evt);
-    HRESULT OnPush(const Event::Push &evt);
+    HRESULT OnRender(const Event::Render *evt);
+    HRESULT OnPush(const Event::Push *evt);
 
 private:
-    void HandleEvent(const Event::Base &evt);
+    bool HandleEvent(Event::Base *evt);
 
 private:
     HINSTANCE _hInstance;
@@ -39,11 +39,12 @@ private:
     ZoneInfo _zoneInfo;
     IWICBitmap *_editBitmap;
     ID2D1Bitmap *_displayBitmap;
-    UINT _currentColorIndex = 0;
+    UINT _currentColor;
+    bool _finished;
 
     static const UINT COLORS_COUNT = 6;
     const UINT32 COLORS[COLORS_COUNT] = {
-        0xFF0000FF, 0x00FF00FF, 0x0000FFFF,
-        0xFFFF00FF, 0xFF00FFFF, 0x00FFFFFF
+        0xFFFF0000, 0xFF00FF00, 0xFF0000FF,
+        0xFFFFFF00, 0xFFFF00FF, 0xFF00FFFF
     };
 };

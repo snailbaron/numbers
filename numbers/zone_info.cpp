@@ -7,20 +7,20 @@
 #include <ctime>
 
 ZoneInfo::ZoneInfo()
-{
-}
+{ }
 
 ZoneInfo::~ZoneInfo()
-{
-    _zoneCenters.clear();
-    _colorOrder.clear();
-}
+{ }
 
 const std::tuple<UINT, UINT> & ZoneInfo::GetZoneCenter(const UINT &zoneNumber) const
 {
-    return _zoneCenters[_colorOrder[zoneNumber]];
+    return _zoneCenters[zoneNumber - 1];
 }
 
+/**
+    Build a zone map for a given bitmap source.
+    Only works with 1bpp black & white images.
+ */
 HRESULT ZoneInfo::Build(IWICBitmapSource *source)
 {
     HRESULT hr = S_OK;
@@ -33,6 +33,7 @@ HRESULT ZoneInfo::Build(IWICBitmapSource *source)
     if (!IsEqualGUID(bmPixelFormat, GUID_WICPixelFormatBlackWhite))
         return E_FAIL;
 
+    // Copy bitmap pixels to buffer
     UINT bmWidth, bmHeight;
     hr = source->GetSize(&bmWidth, &bmHeight);
     if (FAILED(hr)) return hr;

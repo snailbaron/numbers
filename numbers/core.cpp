@@ -15,7 +15,8 @@ Core::Core(HINSTANCE hInstance) :
     _zoneInfo(),
     _editBitmap(NULL),
     _displayBitmap(NULL),
-    _currentColorIndex(0)
+    _currentColor(1),
+    _finished(false)
 {
 }
 
@@ -80,6 +81,8 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
 {
     HRESULT hr = S_OK;
 
+    _finished = false;
+
     // Load and process level bitmap
     BitmapLoader loader(_wicFactory);
 
@@ -94,7 +97,9 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
     _eventQueue.Clear();
     window.RegisterEventQueue(&_eventQueue);
 
-    InvalidateRect(window.GetHwnd(), NULL, FALSE);
+    RECT clientRect;
+    GetClientRect(window.GetHwnd(), &clientRect);
+    InvalidateRect(window.GetHwnd(), &clientRect, FALSE);
 
     hr = window.GetRenderTarget()->CreateBitmapFromWicBitmap(_editBitmap, &_displayBitmap);
     if (FAILED(hr)) return hr;
@@ -122,54 +127,61 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
 
         while (!_eventQueue.Empty())
         {
-            Event::Base evt;
-            _eventQueue.Pull(&evt);
+            Event::Base *evt = _eventQueue.Pull();
             HandleEvent(evt);
+            delete evt;
+
+            if (_finished)
+                done = true;
         }
     }
 
     return hr;
 }
 
-HRESULT Core::OnRender(const Event::Render &evt)
+HRESULT Core::OnRender(const Event::Render *evt)
 {
     HRESULT hr = S_OK;
 
-    evt.renderTarget->BeginDraw();
-    evt.renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+    evt->renderTarget->BeginDraw();
+    evt->renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
-    D2D1_SIZE_F rtSize = evt.renderTarget->GetSize();
+    D2D1_SIZE_F rtSize = evt->renderTarget->GetSize();
     D2D1_RECT_F rtRect = { 0, 0, rtSize.width, rtSize.height };
-    evt.renderTarget->DrawBitmap(_displayBitmap, rtRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+    evt->renderTarget->DrawBitmap(_displayBitmap, rtRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
 
     D2D1_SIZE_F bmSize = _displayBitmap->GetSize();
-    for (UINT i = 0; i < _zoneInfo.GetColorCount(); i++)
+    for (UINT i = 1; i <= _zoneInfo.GetColorCount(); i++)
     {
-        std::wostringstream os;
-
         UINT x, y;
-        std::tie(x, y) = _zoneInfo.GetZoneCenter(i);
+        std::tie(y, x) = _zoneInfo.GetZoneCenter(i);
+
+        UINT color = _zoneInfo.GetColor(i);
+        std::wostringstream os;
+        os << color;
 
         D2D1_RECT_F textRect = { x * rtSize.width / bmSize.width, y * rtSize.height / bmSize.height, 0, 0 };
-        textRect.right = textRect.left;
-        textRect.bottom = textRect.top;
-        evt.renderTarget->DrawTextW(os.str().c_str(), os.str().length(), _textFormat, textRect, _brush);
+        textRect.right = textRect.left + 50.f;
+        textRect.bottom = textRect.top + 50.f;
+        evt->renderTarget->DrawTextW(os.str().c_str(), os.str().length(), _textFormat, textRect, _brush);
     }
-    hr = evt.renderTarget->EndDraw();
+    hr = evt->renderTarget->EndDraw();
 
     return hr;
 }
 
-HRESULT Core::OnPush(const Event::Push &evt)
+HRESULT Core::OnPush(const Event::Push *evt)
 {
-    D2D1_SIZE_F rtSize = evt.renderTarget->GetSize();
+    D2D1_SIZE_F rtSize = evt->renderTarget->GetSize();
     D2D1_SIZE_F bmSize = _displayBitmap->GetSize();
-    UINT xp = static_cast<UINT>(evt.x * bmSize.width / rtSize.width);
-    UINT yp = static_cast<UINT>(evt.y * bmSize.height / rtSize.height);
+    UINT xp = static_cast<UINT>(evt->x * bmSize.width / rtSize.width);
+    UINT yp = static_cast<UINT>(evt->y * bmSize.height / rtSize.height);
 
     HRESULT hr = S_OK;
 
     UINT targetZone = _zoneInfo.GetZoneNumber(xp, yp);
+    if (_zoneInfo.GetColor(targetZone) != _currentColor)
+        return S_OK;
 
     UINT w, h;
     hr = _editBitmap->GetSize(&w, &h);
@@ -193,27 +205,25 @@ HRESULT Core::OnPush(const Event::Push &evt)
     hr = lock->Release();
 
     _displayBitmap->Release();
-    hr = evt.renderTarget->CreateBitmapFromWicBitmap(_editBitmap, &_displayBitmap);
+    hr = evt->renderTarget->CreateBitmapFromWicBitmap(_editBitmap, &_displayBitmap);
     if (FAILED(hr)) return hr;
         
-    InvalidateRect(evt.hwnd, NULL, FALSE);
+    InvalidateRect(evt->hwnd, NULL, FALSE);
 
-    _currentColorIndex++;
+    _currentColor++;
+    if (_currentColor > _zoneInfo.GetColorCount())
+        _finished = true;
 
     return hr;
 }
 
 /** Dispatch events coming from event queue */
-void Core::HandleEvent(const Event::Base &evt)
+bool Core::HandleEvent(Event::Base *evt)
 {
-    switch (evt.type)
-    {
-        case Event::Type::RENDER:
-            OnRender(dynamic_cast<const Event::Render &>(evt));
-            break;
+    if (Event::Render *render = dynamic_cast<Event::Render *>(evt))
+        OnRender(render);
+    else if (Event::Push *push = dynamic_cast<Event::Push *>(evt))
+        OnPush(push);
 
-        case Event::Type::PUSH:
-            OnPush(dynamic_cast<const Event::Push &>(evt));
-            break;
-    }
+    return true;
 }

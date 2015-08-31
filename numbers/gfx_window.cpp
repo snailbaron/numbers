@@ -64,7 +64,8 @@ LRESULT GfxWindow::HandleMessage(UINT msg, WPARAM wparam, LPARAM lparam)
         case WM_PAINT:
         {
             if (_evtQueue)
-                _evtQueue->Push(Event::Render(_renderTarget));
+                _evtQueue->Push(new Event::Render(_renderTarget));
+            ValidateRect(_hwnd, NULL);
             return 0;
         }
 
@@ -72,7 +73,7 @@ LRESULT GfxWindow::HandleMessage(UINT msg, WPARAM wparam, LPARAM lparam)
         {
             int x = GET_X_LPARAM(lparam), y = GET_Y_LPARAM(lparam);
             if (_evtQueue)
-                _evtQueue->Push(Event::Push(_hwnd, _renderTarget, x, y));
+                _evtQueue->Push(new Event::Push(_hwnd, _renderTarget, x, y));
             return 0;
         }
 
@@ -83,7 +84,7 @@ LRESULT GfxWindow::HandleMessage(UINT msg, WPARAM wparam, LPARAM lparam)
         }
     }
 
-    return 1;
+    return DefWindowProc(_hwnd, msg, wparam, lparam);
 }
 
 GfxWindow::GfxWindow(HINSTANCE hInstance, LPCWSTR name, ID2D1Factory *d2dFactory) :
@@ -142,8 +143,8 @@ HRESULT GfxWindow::Initialize()
     // Create window
     _hwnd = CreateWindowEx(
         0,
-        _WND_CLASS_NAME,
         MAKEINTATOM(_wndClassAtom),
+        _name,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         800, 800,
