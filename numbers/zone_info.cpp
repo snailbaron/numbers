@@ -6,20 +6,19 @@
 #include <algorithm>
 #include <ctime>
 
-ZoneInfo::ZoneInfo() :
-    _zoneMap(nullptr),
-    _zoneMapHeight(0),
-    _zoneMapWidth(0)
+ZoneInfo::ZoneInfo()
 {
 }
 
 ZoneInfo::~ZoneInfo()
 {
-    if (_zoneMap)
-        Free2D(_zoneMap);
-
     _zoneCenters.clear();
     _colorOrder.clear();
+}
+
+const std::tuple<UINT, UINT> & ZoneInfo::GetZoneCenter(const UINT &zoneNumber) const
+{
+    return _zoneCenters[_colorOrder[zoneNumber]];
 }
 
 HRESULT ZoneInfo::Build(IWICBitmapSource *source)
@@ -45,10 +44,7 @@ HRESULT ZoneInfo::Build(IWICBitmapSource *source)
     if (SUCCEEDED(hr))
     {
         // Create a clean zone map for this bitmap
-        if (_zoneMap) Free2D<UINT>(_zoneMap);
-        _zoneMap = Allocate2D<UINT>(bmHeight, bmWidth);
-        _zoneMapHeight = bmHeight;
-        _zoneMapWidth = bmWidth;
+        _zoneMap = Matrix2D<int>(bmHeight, bmWidth);
 
         // Create accompanying zone information data
         std::list<std::tuple<UINT64, UINT64, UINT>> zoneInfos;
@@ -115,7 +111,7 @@ HRESULT ZoneInfo::Build(IWICBitmapSource *source)
             UINT64 hSum, wSum;
             UINT count;
             std::tie(hSum, wSum, count) = t;
-            _zoneCenters.push_back(std::make_tuple(hSum / count, wSum / count));
+            _zoneCenters.push_back(std::make_tuple((UINT) (hSum / count), (UINT) (wSum / count)));
         });
 
         // Mix available colors in a random sequence

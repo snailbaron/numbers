@@ -8,7 +8,7 @@ BitmapLoader::~BitmapLoader()
 {
 }
 
-HRESULT BitmapLoader::Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap *displayBitmap)
+HRESULT BitmapLoader::Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap **displayBitmap)
 {
     HRESULT hr = S_OK;
 
@@ -54,9 +54,9 @@ HRESULT BitmapLoader::Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap *dis
                         if (SUCCEEDED(hr))
                         {
                             // Convert to bitmap for editing
-                            if (displayBitmap)
-                                displayBitmap->Release();
-                            hr = _wicFactory->CreateBitmapFromSource(displayConverter, WICBitmapCacheOnLoad, &displayBitmap);
+                            if (*displayBitmap)
+                                (*displayBitmap)->Release();
+                            hr = _wicFactory->CreateBitmapFromSource(displayConverter, WICBitmapCacheOnLoad, displayBitmap);
                         }
                     }
                     displayConverter->Release();

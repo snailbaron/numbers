@@ -146,18 +146,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="application.cpp" />
     <ClCompile Include="bitmap_loader.cpp" />
+    <ClCompile Include="core.cpp" />
+    <ClCompile Include="event_queue.cpp" />
     <ClCompile Include="gfx_window.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="utils.cpp" />
+    <ClCompile Include="matrix.cpp" />
     <ClCompile Include="zone_info.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="application.hpp" />
     <ClInclude Include="bitmap_loader.hpp" />
     <ClInclude Include="core.hpp" />
+    <ClInclude Include="event.hpp" />
+    <ClInclude Include="event_queue.hpp" />
     <ClInclude Include="gfx_window.hpp" />
+    <ClInclude Include="matrix.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="zone_info.hpp" />
   </ItemGroup>

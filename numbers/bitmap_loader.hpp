@@ -10,7 +10,7 @@ public:
     BitmapLoader(IWICImagingFactory *wicFactory);
     ~BitmapLoader();
 
-    HRESULT Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap *displayBitmap);
+    HRESULT Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap **displayBitmap);
 
 private:
     IWICImagingFactory *_wicFactory;
