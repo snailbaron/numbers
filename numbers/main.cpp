@@ -52,7 +52,6 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
             core.PlayLevel(L"lev1.bmp");
             core.PlayLevel(L"lev2.bmp");
             core.PlayLevel(L"lev3.bmp");
-            core.PlayLevel(L"lev4.bmp");
         }
         GlobalFinalize();
     }

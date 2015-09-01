@@ -82,6 +82,7 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
     HRESULT hr = S_OK;
 
     _finished = false;
+    _currentColor = 1;
 
     // Load and process level bitmap
     BitmapLoader loader(_wicFactory);
@@ -111,13 +112,10 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
     while (!done)
     {
         MSG msg;
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        while (!done && PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            if (msg.message == WM_QUIT)
-            {
+            if (msg.message == WM_DESTROY)
                 done = true;
-                break;
-            }
 
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -136,6 +134,8 @@ HRESULT Core::PlayLevel(LPCWSTR levelFile)
         }
     }
 
+    Sleep(1000);
+
     return hr;
 }
 
@@ -148,7 +148,7 @@ HRESULT Core::OnRender(const Event::Render *evt)
 
     D2D1_SIZE_F rtSize = evt->renderTarget->GetSize();
     D2D1_RECT_F rtRect = { 0, 0, rtSize.width, rtSize.height };
-    evt->renderTarget->DrawBitmap(_displayBitmap, rtRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+    evt->renderTarget->DrawBitmap(_displayBitmap, rtRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
     D2D1_SIZE_F bmSize = _displayBitmap->GetSize();
     for (UINT i = 1; i <= _zoneInfo.GetColorCount(); i++)
@@ -160,9 +160,9 @@ HRESULT Core::OnRender(const Event::Render *evt)
         std::wostringstream os;
         os << color;
 
-        D2D1_RECT_F textRect = { x * rtSize.width / bmSize.width, y * rtSize.height / bmSize.height, 0, 0 };
-        textRect.right = textRect.left + 50.f;
-        textRect.bottom = textRect.top + 50.f;
+        FLOAT tx = x * rtSize.width / bmSize.width;
+        FLOAT ty = y * rtSize.height / bmSize.height;
+        D2D1_RECT_F textRect = { tx - 50.f, ty - 50.f, tx + 50.f, ty + 50.f };
         evt->renderTarget->DrawTextW(os.str().c_str(), os.str().length(), _textFormat, textRect, _brush);
     }
     hr = evt->renderTarget->EndDraw();
@@ -179,7 +179,10 @@ HRESULT Core::OnPush(const Event::Push *evt)
 
     HRESULT hr = S_OK;
 
-    UINT targetZone = _zoneInfo.GetZoneNumber(xp, yp);
+    int targetZone = _zoneInfo.GetZoneNumber(xp, yp);
+    if (targetZone == -1)
+        return S_OK;
+    
     if (_zoneInfo.GetColor(targetZone) != _currentColor)
         return S_OK;
 

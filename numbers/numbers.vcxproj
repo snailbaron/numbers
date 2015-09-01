@@ -146,15 +146,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bitmap_buffer.cpp" />
     <ClCompile Include="bitmap_loader.cpp" />
     <ClCompile Include="core.cpp" />
     <ClCompile Include="event_queue.cpp" />
     <ClCompile Include="gfx_window.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="matrix.cpp" />
+    <ClCompile Include="utils.cpp" />
     <ClCompile Include="zone_info.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bitmap_buffer.hpp" />
     <ClInclude Include="bitmap_loader.hpp" />
     <ClInclude Include="core.hpp" />
     <ClInclude Include="event.hpp" />

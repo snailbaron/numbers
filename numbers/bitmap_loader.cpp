@@ -58,16 +58,17 @@ HRESULT BitmapLoader::Load(LPCWSTR fileName, ZoneInfo *zoneInfo, IWICBitmap **di
                                 (*displayBitmap)->Release();
                             hr = _wicFactory->CreateBitmapFromSource(displayConverter, WICBitmapCacheOnLoad, displayBitmap);
                         }
+                        displayConverter->Release();
                     }
-                    displayConverter->Release();
                 }
 
                 hr = zoneInfo->Build(bwConverter);
+
+                bwConverter->Release();
             }
-            bwConverter->Release();
         }
+        decoder->Release();
     }
-    decoder->Release();
 
     return hr;
 }

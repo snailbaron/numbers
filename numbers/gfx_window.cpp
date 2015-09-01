@@ -76,12 +76,6 @@ LRESULT GfxWindow::HandleMessage(UINT msg, WPARAM wparam, LPARAM lparam)
                 _evtQueue->Push(new Event::Push(_hwnd, _renderTarget, x, y));
             return 0;
         }
-
-        case WM_DESTROY:
-        {
-            PostQuitMessage(0);
-            return 0;
-        }
     }
 
     return DefWindowProc(_hwnd, msg, wparam, lparam);

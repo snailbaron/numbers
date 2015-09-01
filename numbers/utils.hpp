@@ -26,3 +26,5 @@ template <class T> void ReleaseCOM(T **ptr)
         (*ptr) = NULL;
     }
 }
+
+int FlatRand(int left, int right);
